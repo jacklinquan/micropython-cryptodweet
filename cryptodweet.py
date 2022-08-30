@@ -4,12 +4,14 @@
 - License: MIT
 """
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 __all__ = ["CryptoDweet"]
 
 from binascii import hexlify, unhexlify
 import basicdweet
 from cryptomsg import CryptoMsg
+
+BASE_URL = "https://dweet.io"
 
 
 def to_bytes(msg):
@@ -21,12 +23,14 @@ def from_bytes(msg):
 
 
 class CryptoDweet:
-    def __init__(self, aes_cbc_key=b"aes_cbc_key", aes_cbc_iv=None):
+    def __init__(self, aes_cbc_key=b"aes_cbc_key", aes_cbc_iv=None, base_url=BASE_URL):
         self.aes_cbc_key = aes_cbc_key
         if aes_cbc_iv is None:
             self.aes_cbc_iv = self.aes_cbc_key
         else:
             self.aes_cbc_iv = aes_cbc_iv
+
+        self.base_url = base_url
 
     def dweet_for(self, thing, content_dict):
         cm = CryptoMsg(to_bytes(self.aes_cbc_key), to_bytes(self.aes_cbc_iv))
@@ -43,7 +47,9 @@ class CryptoDweet:
         }
 
         return basicdweet.dweet_for(
-            thing_cipher_hexlified, content_dict_cipher_hexlified
+            thing_cipher_hexlified,
+            content_dict_cipher_hexlified,
+            base_url=self.base_url,
         )
 
     def get_latest_dweet_for(self, thing):
@@ -52,7 +58,8 @@ class CryptoDweet:
         thing_cipher_hexlified = from_bytes(hexlify(thing_cipher))
 
         dweets_list_cipher_hexlified = basicdweet.get_latest_dweet_for(
-            thing_cipher_hexlified
+            thing_cipher_hexlified,
+            base_url=self.base_url,
         )
 
         dweets_list = []
@@ -78,7 +85,10 @@ class CryptoDweet:
         thing_cipher = cm.encrypt_msg(to_bytes(thing))
         thing_cipher_hexlified = from_bytes(hexlify(thing_cipher))
 
-        dweets_list_cipher_hexlified = basicdweet.get_dweets_for(thing_cipher_hexlified)
+        dweets_list_cipher_hexlified = basicdweet.get_dweets_for(
+            thing_cipher_hexlified,
+            base_url=self.base_url,
+        )
 
         dweets_list = []
         for cipher_dweet in dweets_list_cipher_hexlified:
